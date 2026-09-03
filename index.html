@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankCorp Enterprise - Core, Crypto & Purchases System</title>
+
+    <!-- Google Fonts & Bibliotecas Externas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #090d16;
+            color: #f0f6fc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Modais Customizados */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .custom-modal {
+            background: #161b26;
+            border: 1px solid #2d3548;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-modal h3 {
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-modal p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .custom-modal-btn {
+            background: #238636;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        /* Notificações Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10001;
+        }
+
+        .toast {
+            background: #1f293d;
+            border-left: 4px solid #238636;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            font-size: 0.85rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Tela de Login */
+        .login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #090d16;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-card {
+            background-color: #121722;
+            padding: 35px;
+            border-radius: 14px;
+            border: 1px solid #21293a;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .login-card h2 {
+            color: #2ea043;
+            margin-bottom: 8px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .login-card p {
+            color: #8b949e;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .login-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .login-form-group input {
+            background-color: #090d16;
+            border: 1px solid #21293a;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .login-form-group input:focus {
+            border-color: #2ea043;
+        }
+
+        .login-btn {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+
+        .login-btn:hover { background-color: #2ea043; }
+
+        /* App Main */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: #121722;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px solid #21293a;
+        }
+
+        .brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 8px;
+        }
+
+        .brand span { color: #2ea043; }
+
+        .menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .menu li button {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu li button:hover, .menu li button.active {
+            background-color: #1c2333;
+            color: #2ea043;
+            font-weight: 600;
+        }
+
+        .user-card {
+            background-color: #090d16;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #21293a;
+        }
+
+        .user-card p {
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+
+        .btn-exit {
+            width: 100%;
+            background-color: #da3633;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            background: #1c2333;
+            border: 1px solid #21293a;
+            color: #f0f6fc;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .time-badge {
+            background-color: #121722;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #58a6ff;
+            border: 1px solid #21293a;
+            font-weight: 500;
+        }
+
+        /* Metrics Cards */
+        .top-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background-color: #121722;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #21293a;
+        }
+
+        .card span {
+            font-size: 0.8rem;
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        .card h2 {
+            margin-top: 10px;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .green { color: #2ea043; }
+        .red { color: #f85149; }
+        .blue { color: #58a6ff; }
+        .orange { color: #d97706; }
+
+        /* Quick Form */
+        .quick-form {
+            background-color: #121722;
+            padding: 20px;
+            border-radius: 12px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto;
+            gap: 10px;
+            margin-bottom: 28px;
+            border: 1px solid #21293a;
+            align-items: center;
+        }
+
+        .quick-form input, .quick-form select {
+            background-color: #090d16;
+            border: 1px solid #21293a;
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .btn-green { background-color: #238636; color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+        .btn-red { background-color: #da3633; color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+        .btn-orange { background-color: #d97706; color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .chart-box {
+            background-color: #121722;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #21293a;
+        }
+
+        .chart-box h3 {
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px !important;
+            width: 100%;
+        }
+
+        /* Tabelas */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            background-color: #090d16;
+            border: 1px solid #21293a;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 250px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid #21293a;
+            font-size: 0.85rem;
+        }
+
+        .data-table th {
+            color: #8b949e;
+            background-color: #090d16;
+            font-weight: 600;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #161c2b;
+            cursor: pointer;
+        }
+
+        .badge-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-up { background: rgba(46, 160, 67, 0.15); color: #2ea043; border: 1px solid #2ea043; }
+        .badge-down { background: rgba(248, 81, 73, 0.15); color: #f85149; border: 1px solid #f85149; }
+        .badge-compra { background: rgba(217, 119, 6, 0.15); color: #f59e0b; border: 1px solid #d97706; }
+
+        .crypto-img {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .quick-form { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #21293a; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MODAL CUSTOMIZADO (GERAL E CRIPTO DETALHES) -->
+    <div class="custom-modal-overlay" id="customModalOverlay">
+        <div class="custom-modal">
+            <h3 id="modalTitle">Notificação</h3>
+            <div id="modalContent">
+                <p id="modalMessage">Mensagem do sistema.</p>
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="custom-modal-btn" onclick="fecharModal()">Compreendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICAÇÕES TOAST -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 🔒 TELA DE LOGIN DO ADMINISTRADOR -->
+    <div class="login-overlay" id="loginScreen">
+        <div class="login-card">
+            <h2>🔒 BankCorp Enterprise</h2>
+            <p>Sua sessão segura de administração bancária.</p>
+            <div class="login-form-group">
+                <input type="text" id="adminNome" placeholder="Nome do Administrador">
+                <input type="text" id="adminCPF" placeholder="CPF do Usuário">
+                <input type="password" id="adminSenha" placeholder="Senha de Acesso">
+                <button class="login-btn" onclick="realizarLogin()">Autenticar Sistema</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🏦 PAINEL BANCÁRIO PRINCIPAL -->
+    <div class="app-container" id="appContainer">
+        <div class="sidebar">
+            <div>
+                <div class="brand">🏦 Bank<span>Corp</span></div>
+                <ul class="menu">
+                    <li><button id="btnAndamento" class="active" onclick="switchView('andamento')">📊 Visão Geral</button></li>
+                    <li><button id="btnCrypto" onclick="switchView('crypto')">🪙 Criptomoedas (Top 25)</button></li>
+                    <li><button id="btnCompras" onclick="switchView('compras')">🛍️ Registro de Compras</button></li>
+                    <li><button id="btnExtrato" onclick="switchView('extrato')">📄 Extrato & Auditoria</button></li>
+                    <li><button id="btnClientes" onclick="switchView('clientes')">👥 Gestão de Clientes</button></li>
+                </ul>
+            </div>
+            <div class="user-card">
+                <strong class="green" id="adminUserDisplay">Administrador</strong>
+                <p id="adminCpfDisplay">CPF: ***.***.***-**</p>
+                <button class="btn-exit" onclick="fazerLogout()">Encerrar Sessão</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1 id="viewTitle">Visão Geral das Operações</h1>
+                <div class="header-actions">
+                    <button class="toggle-btn" onclick="toggleValores()" id="btnToggleVisibilidade">👁️ Ocultar Saldos</button>
+                    <div class="time-badge">🕒 <span id="clock">00:00:00</span></div>
+                </div>
+            </div>
+
+            <!-- Cards de Saldos -->
+            <div class="top-cards" id="topCards">
+                <div class="card">
+                    <span>Entradas do Mês</span>
+                    <h2 class="green" id="txtReceitas">R$ 0,00</h2>
+                </div>
+                <div class="card">
+                    <span>Saídas / Despesas</span>
+                    <h2 class="red" id="txtDespesas">R$ 0,00</h2>
+                </div>
+                <div class="card">
+                    <span>Total em Compras</span>
+                    <h2 class="orange" id="txtTotalCompras">R$ 0,00</h2>
+                </div>
+                <div class="card">
+                    <span>Saldo Consolidado</span>
+                    <h2 class="blue" id="txtSaldo">R$ 0,00</h2>
+                </div>
+            </div>
+
+            <!-- VISÃO 1: Dashboard -->
+            <div id="viewAndamento">
+                <div class="quick-form">
+                    <input type="text" id="desc" placeholder="Descrição do Lançamento">
+                    <input type="number" id="val" placeholder="Valor (R$)">
+                    <select id="cat">
+                        <option value="Operacional">Operacional</option>
+                        <option value="Investimentos">Investimentos</option>
+                        <option value="Aquisições / Compras">Aquisições / Compras</option>
+                        <option value="Folha de Pagamento">Folha de Pagamento</option>
+                    </select>
+                    <input type="file" id="compFile" style="display:none;" onchange="atualizarNomeArquivo()">
+                    <button type="button" class="toggle-btn" onclick="document.getElementById('compFile').click()" id="lblFile">📎 Anexo</button>
+                    <button class="btn-green" onclick="addTransacao('receita')">+ Entrada</button>
+                    <button class="btn-red" onclick="addTransacao('despesa')">- Saída</button>
+                    <button class="btn-orange" onclick="addTransacao('compra')">🛍️ Comprar</button>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3>Evolução do Fluxo de Caixa</h3>
+                        <div class="chart-container">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>Divisão das Movimentações</h3>
+                        <div class="chart-container">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISÃO CRIPTO (TOP 25 EM TEMPO REAL) -->
+            <div id="viewCrypto" style="display:none;">
+                <div class="chart-box">
+                    <div class="controls-row">
+                        <h3>⚡ Top 25 Criptomoedas do Mercado (Atualizado ao Vivo)</h3>
+                        <button class="toggle-btn" onclick="carregarCriptomoedas()">🔄 Atualizar Cotações</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Moeda</th>
+                                <th>Preço (USD)</th>
+                                <th>Preço (BRL)</th>
+                                <th>24h %</th>
+                                <th>Tendência</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaCryptoBody">
+                            <tr><td colspan="7" style="text-align:center; color:#8b949e;">Carregando cotações em tempo real...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISÃO: REGISTRO DE COMPRAS E AQUISIÇÕES -->
+            <div id="viewCompras" style="display:none;">
+                <div class="chart-box">
+                    <div class="controls-row">
+                        <h3>🛍️ Histórico Permanentes de Compras & Aquisições</h3>
+                        <input type="text" class="search-input" id="searchCompras" placeholder="🔍 Buscar compra..." onkeyup="filtrarCompras()">
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Item / Descrição</th>
+                                <th>Categoria</th>
+                                <th>Valor Gastos (R$)</th>
+                                <th>Comprovante</th>
+                                <th>Status Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaComprasBody">
+                            <tr><td colspan="6" style="text-align:center; color:#8b949e;">Nenhuma compra registrada até o momento.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISÃO 3: Extrato -->
+            <div id="viewExtrato" style="display:none;">
+                <div class="chart-box">
+                    <div class="controls-row">
+                        <input type="text" class="search-input" id="searchExtrato" placeholder="🔍 Buscar no extrato..." onkeyup="filtrarExtrato()">
+                        <div>
+                            <button class="btn-green" onclick="exportarCSV()">📊 Exportar Excel (CSV)</button>
+                            <button class="toggle-btn" onclick="exportarPDF()">📄 Exportar Relatório PDF</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Comprovante</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaExtratoBody">
+                            <tr><td colspan="6" style="text-align:center; color:#8b949e;">Nenhuma movimentação registrada.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISÃO 4: Gestão de Clientes -->
+            <div id="viewClientes" style="display:none;">
+                <div class="chart-box" style="margin-bottom: 20px;">
+                    <h3>➕ Cadastrar Cliente Corporate</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin:15px 0;">
+                        <input type="text" id="cliNome" class="search-input" style="width:100%" placeholder="Razão Social / Nome">
+                        <input type="text" id="cliCPF" class="search-input" style="width:100%" placeholder="CNPJ / CPF">
+                        <input type="password" id="cliSenha" class="search-input" style="width:100%" placeholder="Senha do Cliente">
+                    </div>
+                    <button class="btn-green" onclick="cadastrarCliente()">Cadastrar Cliente</button>
+                </div>
+
+                <div class="chart-box">
+                    <h3>👥 Base de Clientes</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Documento</th>
+                                <th>Data de Registro</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaClientesBody">
+                            <tr><td colspan="4" style="text-align:center; color:#8b949e;">Nenhum cliente cadastrado.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let transacoes = [];
+        let compras = [];
+        let clientesCadastrados = [];
+        let listaCriptos = [];
+        let mostrarValores = true;
+        let totalReceitas = 0;
+        let totalDespesas = 0;
+        let totalCompras = 0;
+        let chartBar, chartPie, chartModalCrypto;
+        let arquivoAnexado = null;
+
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('pt-BR');
+        }, 1000);
+
+        function exibirModal(titulo, mensagemOuHtml) {
+            document.getElementById('modalTitle').innerText = titulo;
+            const content = document.getElementById('modalContent');
+            if(typeof mensagemOuHtml === 'string' && !mensagemOuHtml.startsWith('<')) {
+                content.innerHTML = `<p>${mensagemOuHtml}</p>`;
+            } else {
+                content.innerHTML = mensagemOuHtml;
+            }
+            document.getElementById('customModalOverlay').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('customModalOverlay').style.display = 'none';
+        }
+
+        function exibirToast(mensagem) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = mensagem;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function realizarLogin() {
+            const nome = document.getElementById('adminNome').value.trim();
+            const cpf = document.getElementById('adminCPF').value.trim();
+            const senha = document.getElementById('adminSenha').value.trim();
+
+            if (nome && cpf && senha) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'flex';
+                document.getElementById('adminUserDisplay').innerText = nome;
+                document.getElementById('adminCpfDisplay').innerText = `CPF: ${cpf}`;
+                initCharts();
+                carregarCriptomoedas();
+                exibirToast(`Bem-vindo ao BankCorp, ${nome}!`);
+            } else {
+                exibirModal("Autenticação Falhou", "Por favor, preencha todos os campos para entrar no sistema.");
+            }
+        }
+
+        function fazerLogout() {
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+
+        function toggleValores() {
+            mostrarValores = !mostrarValores;
+            const btn = document.getElementById('btnToggleVisibilidade');
+            btn.innerText = mostrarValores ? "👁️ Ocultar Saldos" : "🙈 Mostrar Saldos";
+            atualizarCards();
+        }
+
+        function formatarMoeda(valor) {
+            if (!mostrarValores) return "R$ ••••••••";
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function atualizarCards() {
+            document.getElementById('txtReceitas').innerText = formatarMoeda(totalReceitas);
+            document.getElementById('txtDespesas').innerText = formatarMoeda(totalDespesas);
+            document.getElementById('txtTotalCompras').innerText = formatarMoeda(totalCompras);
+            document.getElementById('txtSaldo').innerText = formatarMoeda(totalReceitas - totalDespesas - totalCompras);
+        }
+
+        /* CRIPTOMOEDAS EM TEMPO REAL VIA API COINGECKO */
+        async function carregarCriptomoedas() {
+            const tbody = document.getElementById('listaCryptoBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#8b949e;">🔄 Atualizando dados em tempo real...</td></tr>';
+
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=25&page=1&sparkline=true&price_change_percentage=24h');
+                const data = await response.json();
+                listaCriptos = data;
+                
+                const brlRate = 5.50; 
+
+                tbody.innerHTML = data.map((coin, index) => {
+                    const isUp = coin.price_change_percentage_24h >= 0;
+                    const priceBRL = coin.current_price * brlRate;
+
+                    return `
+                        <tr onclick="abrirDetalhesCrypto('${coin.id}')">
+                            <td><strong>${index + 1}</strong></td>
+                            <td>
+                                <img src="${coin.image}" class="crypto-img" alt="${coin.name}">
+                                <strong>${coin.name}</strong> <span style="color:#8b949e;">(${coin.symbol.toUpperCase()})</span>
+                            </td>
+                            <td>$ ${coin.current_price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                            <td>R$ ${priceBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td class="${isUp ? 'green' : 'red'}"><strong>${isUp ? '+' : ''}${coin.price_change_percentage_24h.toFixed(2)}%</strong></td>
+                            <td>
+                                <span class="badge-status ${isUp ? 'badge-up' : 'badge-down'}">
+                                    ${isUp ? '📈 EM ALTA' : '📉 EM BAIXA'}
+                                </span>
+                            </td>
+                            <td><button class="toggle-btn" style="padding:4px 8px; font-size:0.75rem;">Analisar</button></td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#f85149;">Erro ao carregar dados de criptomoedas. Tente novamente em instantes.</td></tr>';
+            }
+        }
+
+        function abrirDetalhesCrypto(id) {
+            const coin = listaCriptos.find(c => c.id === id);
+            if (!coin) return;
+
+            const isUp = coin.price_change_percentage_24h >= 0;
+            const html = `
+                <div style="text-align:center; margin-bottom: 15px;">
+                    <img src="${coin.image}" style="width:50px; height:50px; margin-bottom:8px;">
+                    <h2 style="color:#fff;">${coin.name} (${coin.symbol.toUpperCase()})</h2>
+                    <p style="font-size: 1.2rem; margin-top:5px; font-weight:bold;" class="${isUp ? 'green' : 'red'}">
+                        ${isUp ? '🚀 TENDÊNCIA DE ALTA (BULLISH)' : '⚠️ TENDÊNCIA DE BAIXA (BEARISH)'}
+                    </p>
+                </div>
+                <div style="background:#090d16; padding:15px; border-radius:8px; margin-bottom:15px; font-size:0.85rem;">
+                    <p><strong>Preço USD:</strong> $ ${coin.current_price.toLocaleString('en-US')}</p>
+                    <p><strong>Variação 24h:</strong> <span class="${isUp ? 'green' : 'red'}">${coin.price_change_percentage_24h.toFixed(2)}%</span></p>
+                    <p><strong>Maior Preço 24h:</strong> $ ${coin.high_24h ? coin.high_24h.toLocaleString('en-US') : 'N/A'}</p>
+                    <p><strong>Menor Preço 24h:</strong> $ ${coin.low_24h ? coin.low_24h.toLocaleString('en-US') : 'N/A'}</p>
+                </div>
+                <div class="chart-container" style="height: 180px !important;">
+                    <canvas id="cryptoModalChart"></canvas>
+                </div>
+            `;
+
+            exibirModal(`Análise da Moeda: ${coin.name}`, html);
+
+            setTimeout(() => {
+                const ctx = document.getElementById('cryptoModalChart').getContext('2d');
+                if (chartModalCrypto) chartModalCrypto.destroy();
+
+                const sparklineData = coin.sparkline_in_7d ? coin.sparkline_in_7d.price : [coin.current_price];
+                
+                chartModalCrypto = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sparklineData.map((_, i) => i),
+                        datasets: [{
+                            data: sparklineData,
+                            borderColor: isUp ? '#2ea043' : '#f85149',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { display: false }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+                    }
+                });
+            }, 100);
+        }
+
+        /* REGISTRO DE COMPRAS E LANÇAMENTOS */
+        function atualizarNomeArquivo() {
+            const fileInput = document.getElementById('compFile');
+            const lbl = document.getElementById('lblFile');
+            if (fileInput.files.length > 0) {
+                arquivoAnexado = fileInput.files[0].name;
+                lbl.innerText = "📄 Anexado";
+                lbl.style.borderColor = "#2ea043";
+            }
+        }
+
+        function addTransacao(tipo) {
+            const desc = document.getElementById('desc').value.trim();
+            const val = parseFloat(document.getElementById('val').value);
+            const cat = document.getElementById('cat').value;
+
+            if (!desc || !val || val <= 0) {
+                exibirModal("Lançamento Inválido", "Informe uma descrição válida e um valor maior que zero.");
+                return;
+            }
+
+            const item = {
+                data: new Date().toLocaleString('pt-BR'),
+                desc, cat, tipo, valor: val,
+                comprovante: arquivoAnexado || 'Nenhum'
+            };
+
+            if (tipo === 'compra') {
+                compras.unshift(item);
+                totalCompras += val;
+                renderCompras();
+                exibirToast(`Compra de R$ ${val.toFixed(2)} registrada!`);
+            } else {
+                transacoes.unshift(item);
+                if (tipo === 'receita') totalReceitas += val;
+                else totalDespesas += val;
+                exibirToast("Lançamento registrado com sucesso!");
+            }
+
+            document.getElementById('desc').value = '';
+            document.getElementById('val').value = '';
+            document.getElementById('compFile').value = '';
+            document.getElementById('lblFile').innerText = "📎 Anexo";
+            arquivoAnexado = null;
+
+            atualizarCards();
+            atualizarGraficos();
+            renderExtrato();
+        }
+
+        function renderCompras(lista = compras) {
+            const tbody = document.getElementById('listaComprasBody');
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#8b949e;">Nenhuma compra registrada até o momento.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lista.map(c => `
+                <tr>
+                    <td>${c.data}</td>
+                    <td><strong>${c.desc}</strong></td>
+                    <td>${c.cat}</td>
+                    <td><strong class="orange">${formatarMoeda(c.valor)}</strong></td>
+                    <td>${c.comprovante !== 'Nenhum' ? `<span class="badge-status badge-compra">📎 ${c.comprovante}</span>` : '<span style="color:#8b949e">-</span>'}</td>
+                    <td><span class="badge-status badge-compra">REGISTRADO</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function filtrarCompras() {
+            const termo = document.getElementById('searchCompras').value.toLowerCase();
+            const filtrados = compras.filter(c => c.desc.toLowerCase().includes(termo) || c.cat.toLowerCase().includes(termo));
+            renderCompras(filtrados);
+        }
+
+        function renderExtrato(lista = transacoes) {
+            const tbody = document.getElementById('listaExtratoBody');
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#8b949e;">Nenhuma movimentação registrada.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lista.map(t => `
+                <tr>
+                    <td>${t.data}</td>
+                    <td><strong>${t.desc}</strong></td>
+                    <td>${t.cat}</td>
+                    <td><span class="${t.tipo === 'receita' ? 'green' : 'red'}">${t.tipo.toUpperCase()}</span></td>
+                    <td><strong>${formatarMoeda(t.valor)}</strong></td>
+                    <td>${t.comprovante !== 'Nenhum' ? `<span class="badge-status badge-up">📎 ${t.comprovante}</span>` : '<span style="color:#8b949e">-</span>'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filtrarExtrato() {
+            const termo = document.getElementById('searchExtrato').value.toLowerCase();
+            const filtrados = transacoes.filter(t => t.desc.toLowerCase().includes(termo) || t.cat.toLowerCase().includes(termo));
+            renderExtrato(filtrados);
+        }
+
+        function exportarCSV() {
+            if (transacoes.length === 0 && compras.length === 0) return exibirModal("Exportação Vazia", "Não há dados para exportar.");
+
+            let csvContent = "data:text/csv;charset=utf-8,Data,Descrição,Categoria,Tipo,Valor,Comprovante\n";
+            [...transacoes, ...compras].forEach(t => {
+                csvContent += `"${t.data}","${t.desc}","${t.cat}","${t.tipo}","${t.valor}","${t.comprovante}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `extrato_bankcorp_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function exportarPDF() {
+            if (transacoes.length === 0 && compras.length === 0) return exibirModal("Exportação Vazia", "Não há dados para gerar o relatório PDF.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("BankCorp Enterprise - Relatório Operacional", 14, 20);
+
+            let y = 40;
+            [...transacoes, ...compras].forEach(t => {
+                doc.setFontSize(10);
+                doc.text(`${t.data} | ${t.desc} | ${t.tipo.toUpperCase()} | R$ ${t.valor.toFixed(2)}`, 14, y);
+                y += 8;
+            });
+
+            doc.save(`relatorio_${Date.now()}.pdf`);
+        }
+
+        function cadastrarCliente() {
+            const nome = document.getElementById('cliNome').value.trim();
+            const cpf = document.getElementById('cliCPF').value.trim();
+            const senha = document.getElementById('cliSenha').value.trim();
+
+            if (!nome || !cpf || !senha) return exibirModal("Cadastro Incompleto", "Informe todos os dados para cadastrar.");
+
+            clientesCadastrados.push({ nome, cpf, data: new Date().toLocaleDateString('pt-BR') });
+            document.getElementById('cliNome').value = '';
+            document.getElementById('cliCPF').value = '';
+            document.getElementById('cliSenha').value = '';
+
+            renderClientes();
+            exibirToast(`Cliente ${nome} inserido com sucesso!`);
+        }
+
+        function renderClientes() {
+            const tbody = document.getElementById('listaClientesBody');
+            tbody.innerHTML = clientesCadastrados.map(c => `
+                <tr>
+                    <td><strong>${c.nome}</strong></td>
+                    <td>${c.cpf}</td>
+                    <td>${c.data}</td>
+                    <td><span class="green">● Ativo</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function switchView(view) {
+            const views = ['andamento', 'crypto', 'compras', 'extrato', 'clientes'];
+            const titles = {
+                'andamento': 'Visão Geral das Operações',
+                'crypto': 'Criptomoedas - Mercado Top 25 em Tempo Real',
+                'compras': 'Registro Permanente de Compras e Aquisições',
+                'extrato': 'Extrato Corporativo & Auditoria',
+                'clientes': 'Gestão de Clientes Corporate'
+            };
+
+            document.getElementById('viewTitle').innerText = titles[view];
+
+            views.forEach(v => {
+                const target = document.getElementById(`view${v.charAt(0).toUpperCase() + v.slice(1)}`);
+                const btn = document.getElementById(`btn${v.charAt(0).toUpperCase() + v.slice(1)}`);
+                if (target) target.style.display = (v === view) ? 'block' : 'none';
+                if (btn) btn.classList.toggle('active', v === view);
+            });
+        }
+
+        function initCharts() {
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            chartBar = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Entradas', 'Despesas', 'Compras'],
+                    datasets: [{ data: [0, 0, 0], backgroundColor: ['#238636', '#da3633', '#d97706'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            chartPie = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Entradas', 'Despesas', 'Compras'],
+                    datasets: [{ data: [1, 0, 0], backgroundColor: ['#238636', '#da3633', '#d97706'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function atualizarGraficos() {
+            chartBar.data.datasets[0].data = [totalReceitas, totalDespesas, totalCompras];
+            chartPie.data.datasets[0].data = [totalReceitas, totalDespesas, totalCompras];
+            chartBar.update();
+            chartPie.update();
+        }
+    </script>
+</body>
+</html>
